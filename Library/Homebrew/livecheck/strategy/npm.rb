@@ -17,8 +17,6 @@ module Homebrew
       #
       # @api public
       class Npm
-        extend T::Sig
-
         NICE_NAME = "npm"
 
         # The `Regexp` used to determine if the strategy applies to the URL.
@@ -73,7 +71,7 @@ module Homebrew
             url:    String,
             regex:  T.nilable(Regexp),
             unused: T.nilable(T::Hash[Symbol, T.untyped]),
-            block:  T.untyped,
+            block:  T.nilable(Proc),
           ).returns(T::Hash[Symbol, T.untyped])
         }
         def self.find_versions(url:, regex: nil, **unused, &block)

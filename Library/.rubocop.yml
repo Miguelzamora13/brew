@@ -13,7 +13,6 @@ inherit_mode:
 
 AllCops:
   TargetRubyVersion: 2.6
-  DisplayCopNames: false
   ActiveSupportExtensionsEnabled: true
   NewCops: enable
   Include:
@@ -25,6 +24,8 @@ AllCops:
     - "Homebrew/bin/*"
     - "Homebrew/vendor/**/*"
     - "Taps/*/*/vendor/**/*"
+  SuggestExtensions:
+    rubocop-minitest: false
 
 Cask/Desc:
   Description: "Ensure that the desc stanza conforms to various content and style checks."
@@ -32,10 +33,6 @@ Cask/Desc:
 
 Cask/HomepageUrlTrailingSlash:
   Description: "Ensure that the homepage url has a slash after the domain name."
-  Enabled: true
-
-Cask/NoDslVersion:
-  Description: "Do not use the deprecated DSL version syntax in your cask header."
   Enabled: true
 
 Cask/StanzaGrouping:
@@ -169,7 +166,6 @@ Naming/HeredocDelimiterNaming:
 Naming/InclusiveLanguage:
   CheckStrings: true
   FlaggedTerms:
-    # TODO: If possible, make this stricter.
     slave:
       AllowedRegex:
         - "gitslave" # Used in formula `gitslave`
@@ -192,13 +188,13 @@ Naming/MethodParameterName:
 Naming/VariableNumber:
   Enabled: false
 
-# Does not hinder readability, so might as well enable it.
-Performance/CaseWhenSplat:
-  Enabled: true
-
 # Makes code less readable for minor performance increases.
 Performance/Caller:
   Enabled: false
+
+# Does not hinder readability, so might as well enable it.
+Performance/CaseWhenSplat:
+  Enabled: true
 
 # Makes code less readable for minor performance increases.
 Performance/MethodObjectAsBlock:
@@ -281,20 +277,30 @@ RSpec/Focus:
 Sorbet/ConstantsFromStrings:
   Enabled: false
 
+# This is already the default
 Sorbet/FalseSigil:
-  Exclude:
-    - "Taps/**/*"
-    - "/**/{Formula,Casks}/**/*.rb"
-    - "**/{Formula,Casks}/**/*.rb"
-    - "Homebrew/test/**/Casks/**/*.rb"
+  Enabled: false
+
+# T::Sig is monkey-patched into Module
+Sorbet/RedundantExtendTSig:
+  Enabled: true
 
 Sorbet/StrictSigil:
+  Enabled: true
   inherit_mode:
     override:
       - Include
-  Enabled: true
   Include:
     - "**/*.rbi"
+
+Sorbet/TrueSigil:
+  Enabled: true
+  Exclude:
+    - "Homebrew/standalone/init.rb" # loaded before sorbet-runtime
+    - "Taps/**/*"
+    - "/**/{Formula,Casks}/**/*.rb"
+    - "**/{Formula,Casks}/**/*.rb"
+    - "Homebrew/test/**/*.rb"
 
 # Require &&/|| instead of and/or
 Style/AndOr:
@@ -365,6 +371,14 @@ Style/HashAsLastArrayItem:
     - "/**/Formula/**/*.rb"
     - "**/Formula/**/*.rb"
 
+Style/InvertibleUnlessCondition:
+  Enabled: true
+  InverseMethods:
+    # Favor `if a != b` over `unless a == b`
+    :==: :!=
+    # Unset this (prefer `unless a.zero?` over `if a.nonzero?`)
+    :zero?:
+
 # would rather freeze too much than too little
 Style/MutableConstant:
   EnforcedStyle: strict
@@ -380,12 +394,12 @@ Style/NumericLiterals:
   Exclude:
     - "**/Brewfile"
 
-# TODO: These are pre-existing violations and should be corrected
-#   to define methods so that call sites can be type-checked.
 Style/OpenStructUse:
   Exclude:
-    - "Homebrew/cli/args.rb"
     - "Taps/**/*.rb"
+    # TODO: This is a pre-existing violation and should be corrected
+    #   to define methods so that call sites can be type-checked.
+    - "Homebrew/cli/args.rb"
 
 # Rescuing `StandardError` is an understood default.
 Style/RescueStandardError:

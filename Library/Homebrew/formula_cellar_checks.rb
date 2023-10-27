@@ -7,7 +7,6 @@ require "utils/shell"
 #
 # @api private
 module FormulaCellarChecks
-  extend T::Sig
   extend T::Helpers
 
   abstract!
@@ -19,6 +18,8 @@ module FormulaCellarChecks
   def problem_if_output(output); end
 
   def check_env_path(bin)
+    return if Homebrew::EnvConfig.no_env_hints?
+
     # warn the user if stuff was installed outside of their PATH
     return unless bin.directory?
     return if bin.children.empty?
@@ -289,7 +290,7 @@ module FormulaCellarChecks
   def check_service_command(formula)
     return unless formula.prefix.directory?
     return unless formula.service?
-    return if formula.service.command.blank?
+    return unless formula.service.command?
 
     "Service command does not exist" unless File.exist?(formula.service.command.first)
   end
@@ -333,7 +334,7 @@ module FormulaCellarChecks
     mismatches = {}
     keg.binary_executable_or_library_files.each do |file|
       farch = file.arch
-      mismatches[file] = farch unless farch == Hardware::CPU.arch
+      mismatches[file] = farch if farch != Hardware::CPU.arch
     end
     return if mismatches.empty?
 

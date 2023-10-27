@@ -35,8 +35,6 @@ end
 #
 # @api private
 class EmbeddedPatch
-  extend T::Sig
-
   attr_writer :owner
   attr_reader :strip
 
@@ -67,8 +65,6 @@ end
 #
 # @api private
 class DATAPatch < EmbeddedPatch
-  extend T::Sig
-
   attr_accessor :path
 
   def initialize(strip)
@@ -110,8 +106,6 @@ end
 #
 # @api private
 class ExternalPatch
-  extend T::Sig
-
   extend Forwardable
 
   attr_reader :resource, :strip
@@ -131,8 +125,8 @@ class ExternalPatch
   end
 
   def owner=(owner)
-    resource.owner   = owner
-    resource.version = resource.checksum || ERB::Util.url_encode(resource.url)
+    resource.owner = owner
+    resource.version(resource.checksum&.hexdigest || ERB::Util.url_encode(resource.url))
   end
 
   def apply

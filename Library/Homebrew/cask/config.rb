@@ -11,8 +11,6 @@ module Cask
   #
   # @api private
   class Config
-    extend T::Sig
-
     DEFAULT_DIRS = {
       appdir:               "/Applications",
       keyboard_layoutdir:   "/Library/Keyboard Layouts",
@@ -196,12 +194,12 @@ module Cask
     end
 
     sig { params(options: T.untyped).returns(String) }
-    def to_json(**options)
+    def to_json(*options)
       {
         default:  default,
         env:      env,
         explicit: explicit,
-      }.to_json(**options)
+      }.to_json(*options)
     end
   end
 end

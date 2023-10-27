@@ -28,8 +28,6 @@ module Debrew
 
   # Module for displaying a debugging menu.
   class Menu
-    extend T::Sig
-
     Entry = Struct.new(:name, :action)
 
     attr_accessor :prompt, :entries
@@ -102,7 +100,7 @@ module Debrew
     raise(exception) if !active? || !debugged_exceptions.add?(exception) || !mu_try_lock
 
     begin
-      puts exception.backtrace.first.to_s
+      puts exception.backtrace.first
       puts Formatter.error(exception, label: exception.class.name)
 
       loop do

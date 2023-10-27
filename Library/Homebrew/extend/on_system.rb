@@ -4,10 +4,10 @@
 require "simulate_system"
 
 module OnSystem
-  extend T::Sig
-
   ARCH_OPTIONS = [:intel, :arm].freeze
   BASE_OS_OPTIONS = [:macos, :linux].freeze
+  ALL_OS_OPTIONS = [*MacOSVersion::SYMBOLS.keys, :linux].freeze
+  ALL_OS_ARCH_COMBINATIONS = ALL_OS_OPTIONS.product(ARCH_OPTIONS).freeze
 
   sig { params(arch: Symbol).returns(T::Boolean) }
   def self.arch_condition_met?(arch)
@@ -20,7 +20,7 @@ module OnSystem
   def self.os_condition_met?(os_name, or_condition = nil)
     return Homebrew::SimulateSystem.send("simulating_or_running_on_#{os_name}?") if BASE_OS_OPTIONS.include?(os_name)
 
-    raise ArgumentError, "Invalid OS condition: #{os_name.inspect}" unless MacOSVersions::SYMBOLS.key?(os_name)
+    raise ArgumentError, "Invalid OS condition: #{os_name.inspect}" unless MacOSVersion::SYMBOLS.key?(os_name)
 
     if or_condition.present? && [:or_newer, :or_older].exclude?(or_condition)
       raise ArgumentError, "Invalid OS `or_*` condition: #{or_condition.inspect}"
@@ -28,13 +28,13 @@ module OnSystem
 
     return false if Homebrew::SimulateSystem.simulating_or_running_on_linux?
 
-    base_os = MacOS::Version.from_symbol(os_name)
+    base_os = MacOSVersion.from_symbol(os_name)
     current_os = if Homebrew::SimulateSystem.current_os == :macos
       # Assume the oldest macOS version when simulating a generic macOS version
       # Version::NULL is always treated as less than any other version.
       Version::NULL
     else
-      MacOS::Version.from_symbol(Homebrew::SimulateSystem.current_os)
+      MacOSVersion.from_symbol(Homebrew::SimulateSystem.current_os)
     end
 
     return current_os >= base_os if or_condition == :or_newer
@@ -117,7 +117,7 @@ module OnSystem
 
   sig { params(base: Class).void }
   def self.setup_macos_methods(base)
-    MacOSVersions::SYMBOLS.each_key do |os_name|
+    MacOSVersion::SYMBOLS.each_key do |os_name|
       base.define_method("on_#{os_name}") do |or_condition = nil, &block|
         @on_system_blocks_exist = true
 
@@ -139,8 +139,6 @@ module OnSystem
   end
 
   module MacOSAndLinux
-    extend T::Sig
-
     sig { params(base: Class).void }
     def self.included(base)
       OnSystem.setup_arch_methods(base)
@@ -150,8 +148,6 @@ module OnSystem
   end
 
   module MacOSOnly
-    extend T::Sig
-
     sig { params(base: Class).void }
     def self.included(base)
       OnSystem.setup_arch_methods(base)
